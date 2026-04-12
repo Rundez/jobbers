@@ -36,15 +36,22 @@ function extractJobIds(html) {
 
 async function fetchJobDetails(jobId) {
   const html = await fetchWithRetry(`https://www.finn.no/job/ad/${jobId}`);
-  const ldJsonMatch = html.match(/<script type="application\/ld\+json">([^<]+)<\/script>/);
-  if (!ldJsonMatch) return null;
-  let data;
-  try {
-    data = JSON.parse(ldJsonMatch[1]);
-  } catch {
-    return null;
+  // Find ALL script tags and look for the one with JobPosting
+  const allScripts = [...html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/g)];
+  let data = null;
+  for (const m of allScripts) {
+    try {
+      const parsed = JSON.parse(m[1].trim());
+      const candidate = parsed['script:ld+json'] || parsed;
+      if (candidate['@type'] === 'JobPosting') {
+        data = candidate;
+        break;
+      }
+    } catch {
+      // skip
+    }
   }
-  if (data['@type'] !== 'JobPosting') return null;
+  if (!data) return null;
   return {
     id: jobId,
     title: data.title,
