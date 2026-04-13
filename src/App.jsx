@@ -49,14 +49,20 @@ function formatDate(dateStr) {
 
 function extractKeywords(matchReason) {
   if (!matchReason) return [];
-  // Skip rejected jobs - no chips for filtered jobs
-  if (matchReason.includes('avvist') || matchReason.includes('Ingen match')) return [];
-  // Extract quoted positive keywords (e.g. "controller", "lektor", etc.)
+  // Skip rejected/filtered jobs entirely
+  if (matchReason.includes('avvist') || matchReason.includes('Ingen match') || matchReason.includes('Bare én')) return [];
+  const keywords = [];
+  // Extract quoted keywords (e.g. "controller", "lektor")
   const quoted = matchReason.match(/"([^"]+)"/g) || [];
-  const keywords = quoted.map(m => m.replace(/"/g, ''));
-  // Also capture "matematikk/økonomi" suffix if present
+  quoted.forEach(m => keywords.push(m.replace(/"/g, '')));
+  // Also catch "matematikk/økonomi" suffix even when NOT in quotes (e.g. '... + matematikk/økonomi')
   if (matchReason.includes('matematikk/økonomi') && !keywords.includes('matematikk/økonomi')) {
     keywords.push('matematikk/økonomi');
+  }
+  // Fallback: extract descriptive positive reasons (only if no quoted keywords found)
+  if (keywords.length === 0) {
+    if (matchReason.includes('Matematikk-')) keywords.push('matematikk/økonomi');
+    if (matchReason.includes('Utdanningssektor')) keywords.push('utdanning');
   }
   return keywords;
 }
