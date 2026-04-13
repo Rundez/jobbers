@@ -340,7 +340,7 @@ export default function App() {
             <DayPage
               date={currentPage.date}
               jobs={currentPage.jobs}
-              showFiltered={showRelevant && currentPage.jobs.some(j => !j.matchReason?.startsWith('Tittel'))}
+              showFiltered={!showRelevant && currentPage.jobs.some(j => j.matchReason?.startsWith('Tittel'))}
             />
             {showRelevant && bonusJob && (
               <BonusJobCard job={bonusJob} />
