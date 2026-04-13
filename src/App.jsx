@@ -4,6 +4,21 @@ const RESULTS_URL = './results.json';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+// Simple seeded random based on date string
+function getDateSeed(dateStr = new Date().toISOString().slice(0, 10)) {
+  let hash = 0;
+  for (let i = 0; i < dateStr.length; i++) {
+    hash = (hash << 5) - hash + dateStr.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
+function pickRandomSeeded(items, seed) {
+  if (!items || items.length === 0) return null;
+  return items[seed % items.length];
+}
+
 function groupByDate(jobs) {
   const groups = {};
   for (const job of jobs) {
@@ -49,6 +64,29 @@ function JobCard({ job, dimmed = false }) {
         <span className="employment">{job.employmentType?.[0] || 'Ikke spesifisert'}</span>
       </div>
       <p className="match-reason">{job.matchReason}</p>
+      <span className="apply-link">Søk på FINN →</span>
+    </a>
+  );
+}
+
+function BonusJobCard({ job }) {
+  return (
+    <a
+      href={job.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="job-card job-card--bonus"
+    >
+      <div className="bonus-badge">🎲 Dagens overraskelse</div>
+      <div className="job-header">
+        <h3>{job.title}</h3>
+        <span className="company">{job.company}</span>
+      </div>
+      <div className="job-meta">
+        <span className="location">{job.location}</span>
+        <span className="employment">{job.employmentType?.[0] || 'Ikke spesifisert'}</span>
+      </div>
+      <p className="match-reason">Kanskje noe for deg? 🎲</p>
       <span className="apply-link">Søk på FINN →</span>
     </a>
   );
@@ -200,6 +238,14 @@ export default function App() {
   // Group by date
   const dayGroups = useMemo(() => groupByDate(jobs), [jobs]);
 
+  // Random job of the day (stable per day via seeded selection)
+  const bonusJob = useMemo(() => {
+    const filtered = data?.filteredJobs || [];
+    if (filtered.length === 0) return null;
+    const seed = getDateSeed();
+    return pickRandomSeeded(filtered, seed);
+  }, [data]);
+
   // Current page
   const currentPage = dayGroups[pageIndex] || null;
 
@@ -261,6 +307,9 @@ export default function App() {
               jobs={currentPage.jobs}
               showFiltered={showRelevant && currentPage.jobs.some(j => !j.matchReason?.startsWith('Tittel'))}
             />
+            {showRelevant && bonusJob && (
+              <BonusJobCard job={bonusJob} />
+            )}
             <Pagination
               currentIndex={pageIndex}
               totalPages={dayGroups.length}

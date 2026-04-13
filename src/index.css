@@ -186,6 +186,91 @@ main {
   opacity: 0.85;
 }
 
+/* ─── Bonus job card ─────────────────────────────────────────────────────── */
+.job-card--bonus {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--warning);
+  border-radius: var(--radius);
+  padding: 1.1rem 1.25rem;
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 1.5rem;
+  transition: box-shadow var(--transition), border-color var(--transition), transform var(--transition);
+  box-shadow: var(--shadow-sm);
+}
+
+.job-card--bonus:hover {
+  box-shadow: var(--shadow-md);
+  border-left-color: var(--warning);
+  border-color: #d1d5db;
+  transform: translateY(-1px);
+}
+
+.bonus-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: var(--warning);
+  color: #78350f;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  margin-bottom: 0.5rem;
+  width: fit-content;
+}
+
+/* ─── Pagination ───────────────────────────────────────────────────────── */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 2rem;
+  padding: 1rem 1.5rem;
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.page-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-primary);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.page-btn:hover:not(:disabled) {
+  background: var(--surface);
+  border-color: #d1d5db;
+}
+
+.page-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.page-indicator {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  min-width: 3rem;
+  text-align: center;
+}
+
+/* ─── Job card shared elements ────────────────────────────────────────── */
 .job-header {
   display: flex;
   justify-content: space-between;
@@ -232,50 +317,6 @@ main {
   color: var(--accent);
   font-weight: 500;
   margin-top: 0.2rem;
-}
-
-/* ─── Pagination ───────────────────────────────────────────────────────── */
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1.5rem;
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--border);
-}
-
-.page-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.5rem 1rem;
-  font-size: 0.82rem;
-  font-weight: 500;
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--text-primary);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all var(--transition);
-}
-
-.page-btn:hover:not(:disabled) {
-  background: var(--surface);
-  border-color: #d1d5db;
-}
-
-.page-btn:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
-
-.page-indicator {
-  font-size: 0.82rem;
-  color: var(--text-muted);
-  font-weight: 500;
-  min-width: 3rem;
-  text-align: center;
 }
 
 /* ─── States ───────────────────────────────────────────────────────────── */
