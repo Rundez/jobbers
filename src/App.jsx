@@ -45,9 +45,32 @@ function formatDate(dateStr) {
   }
 }
 
+// ─── Keyword chips helper ─────────────────────────────────────────────────
+
+function extractKeywords(matchReason) {
+  if (!matchReason) return [];
+  const quotedMatch = matchReason.match(/"([^"]+)"/g);
+  if (quotedMatch) return quotedMatch.map(m => m.replace(/"/g, ''));
+  if (matchReason.includes('Matematikk-')) return ['matematikk/økonomi'];
+  if (matchReason.includes('Utdanningssektor')) return ['utdanning'];
+  return [];
+}
+
+function KeywordChips({ keywords }) {
+  if (!keywords || keywords.length === 0) return null;
+  return (
+    <div className="keyword-chips">
+      {keywords.map((kw, i) => (
+        <span key={i} className="chip">{kw}</span>
+      ))}
+    </div>
+  );
+}
+
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
 function JobCard({ job, dimmed = false }) {
+  const keywords = extractKeywords(job.matchReason);
   return (
     <a
       href={job.url}
@@ -63,6 +86,7 @@ function JobCard({ job, dimmed = false }) {
         <span className="location">{job.location}</span>
         <span className="employment">{job.employmentType?.[0] || 'Ikke spesifisert'}</span>
       </div>
+      {keywords.length > 0 && <KeywordChips keywords={keywords} />}
       <p className="match-reason">{job.matchReason}</p>
       <span className="apply-link">Søk på FINN →</span>
     </a>

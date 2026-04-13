@@ -305,6 +305,29 @@ main {
   font-weight: 500;
 }
 
+/* ─── Keyword chips ─────────────────────────────────────────────────────── */
+.keyword-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.25rem;
+}
+
+.chip {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--accent);
+  background: var(--accent-light);
+  border-radius: 20px;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.job-card--dimmed .chip {
+  opacity: 0.5;
+}
+
 .match-reason {
   font-size: 0.82rem;
   color: var(--text-secondary);
