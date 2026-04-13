@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-const RESULTS_URL = '/results.json';
+const RESULTS_URL = './results.json';
 
 function JobCard({ job }) {
   return (
