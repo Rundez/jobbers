@@ -49,8 +49,7 @@ function formatDate(dateStr) {
 
 function extractKeywords(matchReason) {
   if (!matchReason) return [];
-  const quotedMatch = matchReason.match(/"([^"]+)"/g);
-  if (quotedMatch) return quotedMatch.map(m => m.replace(/"/g, ''));
+  // Only show positive match keywords - Matematikk and Utdanning are the positive signals
   if (matchReason.includes('Matematikk-')) return ['matematikk/økonomi'];
   if (matchReason.includes('Utdanningssektor')) return ['utdanning'];
   return [];
