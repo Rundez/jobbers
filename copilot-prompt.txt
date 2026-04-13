@@ -1,0 +1,34 @@
+IMPLEMENTER TRE FORBEDRINGER I ~/projects/finn-jobs:
+
+1. VITEST TESTOPPSETT
+   - Installer vitest og @vitest/ui som devDependencies
+   - Legg til test-script i package.json: "test": "vitest"
+   - Opprett tests/ mappe med tests/analyze.test.js og tests/setup.js
+   - Kjor vitest for a verifisere alt fungerer
+
+2. VISNING AV FILTRERTE JOBBER
+   - Utvid results.json til aa inneholde BOTH relevante OG filtrerte bort
+   - New results.json format: {analyzed, total, relevant, relevantJobs, filteredJobs}
+   - Legg til en toggle i React UI: "Vis relevante" | "Vis alle"
+   - Filtrerte jobber vises med annen styling
+
+3. PAGINATION: EN DAG == EN SIDE
+   - Grupper jobber etter datePosted
+   - Vis en paginator med forrige/neste dag
+   - Hver side viser kun jobber fra den dagen
+
+DESIGNKRAV:
+- Moderne, minimalistisk estetikk
+- Hvit bakgrunn, fokus pa lesbarhet
+- God typografi
+- Tydelig visuell hierarki: header > dato-gruppe > jobbkort
+- Animerte sidebytte (200-300ms fade eller slide)
+- Filtertoggle skal vaere persistent pa tvers av paginasjon
+
+TEKNISK INFO:
+- React 18, Vite, vanilla CSS (ingen Tailwind)
+- JSON-filene ligger i public/ og kopieres til docs/ ved build
+- App kjorer pa GitHub Pages under /jobbers/
+
+KOMMITT: feat: vitest setup, filtered jobs toggle, and day-based pagination
+VERIFISER: npm run build && npm test (begge skal kjore uten feil)

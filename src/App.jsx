@@ -1,17 +1,52 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 const RESULTS_URL = './results.json';
 
-function JobCard({ job }) {
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function groupByDate(jobs) {
+  const groups = {};
+  for (const job of jobs) {
+    const date = job.datePosted || 'ukjent';
+    if (!groups[date]) groups[date] = [];
+    groups[date].push(job);
+  }
+  // Sort dates descending (newest first)
+  return Object.entries(groups)
+    .sort(([a], [b]) => (a < b ? 1 : -1))
+    .map(([date, jobs]) => ({ date, jobs }));
+}
+
+function formatDate(dateStr) {
+  try {
+    return new Date(dateStr).toLocaleDateString('nb-NO', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
+// ─── Sub-components ──────────────────────────────────────────────────────────
+
+function JobCard({ job, dimmed = false }) {
   return (
-    <a href={job.url} target="_blank" rel="noopener noreferrer" className="job-card">
+    <a
+      href={job.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`job-card${dimmed ? ' job-card--dimmed' : ''}`}
+    >
       <div className="job-header">
         <h3>{job.title}</h3>
         <span className="company">{job.company}</span>
       </div>
       <div className="job-meta">
         <span className="location">{job.location}</span>
-        <span className="date">{new Date(job.datePosted).toLocaleDateString('nb-NO')}</span>
+        <span className="employment">{job.employmentType?.[0] || 'Ikke spesifisert'}</span>
       </div>
       <p className="match-reason">{job.matchReason}</p>
       <span className="apply-link">Søk på FINN →</span>
@@ -19,37 +54,113 @@ function JobCard({ job }) {
   );
 }
 
+function DayPage({ date, jobs, showFiltered }) {
+  return (
+    <div className="day-page">
+      <div className="day-header">
+        <h2>{formatDate(date)}</h2>
+        <span className="day-count">{jobs.length} {jobs.length === 1 ? 'jobb' : 'jobber'}</span>
+      </div>
+      <div className="job-list">
+        {jobs.map(job => (
+          <JobCard key={job.id} job={job} dimmed={showFiltered} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Pagination({ currentIndex, totalPages, onPrev, onNext }) {
+  if (totalPages <= 1) return null;
+  return (
+    <div className="pagination">
+      <button
+        className="page-btn"
+        onClick={onPrev}
+        disabled={currentIndex === totalPages - 1}
+        aria-label="Eldre jobber"
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M10 12L6 8l4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+        Eldre
+      </button>
+      <span className="page-indicator">{currentIndex + 1} / {totalPages}</span>
+      <button
+        className="page-btn"
+        onClick={onNext}
+        disabled={currentIndex === 0}
+        aria-label="Nyere jobber"
+      >
+        Nyere
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </button>
+    </div>
+  );
+}
+
+function Toggle({ mode, onToggle }) {
+  return (
+    <div className="toggle-wrap">
+      <button
+        className={`toggle-btn${mode === 'relevant' ? ' toggle-btn--active' : ''}`}
+        onClick={() => onToggle('relevant')}
+      >
+        Relevante
+      </button>
+      <button
+        className={`toggle-btn${mode === 'all' ? ' toggle-btn--active' : ''}`}
+        onClick={() => onToggle('all')}
+      >
+        Alle
+      </button>
+    </div>
+  );
+}
+
 function LoadingState() {
   return (
-    <div className="loading">
+    <div className="state-card">
       <div className="spinner" />
-      <p>Laster jobber...</p>
+      <p>Laster jobber…</p>
     </div>
   );
 }
 
 function ErrorState({ message }) {
   return (
-    <div className="error">
+    <div className="state-card state-card--error">
       <p>Kunne ikke laste jobber: {message}</p>
     </div>
   );
 }
 
-function EmptyState() {
+function EmptyState({ mode }) {
   return (
-    <div className="empty">
-      <p>Ingen relevante jobber funnet ennå.</p>
-      <p className="hint">Sjekk tilbake senere eller oppdater søket.</p>
+    <div className="state-card">
+      <p>
+        {mode === 'relevant'
+          ? 'Ingen relevante jobber funnet.'
+          : 'Ingen jobber funnet.'}
+      </p>
     </div>
   );
 }
+
+// ─── Main App ────────────────────────────────────────────────────────────────
 
 export default function App() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showRelevant, setShowRelevant] = useState(true);
+  const [pageIndex, setPageIndex] = useState(0);
+  const [animating, setAnimating] = useState(false);
+  const [displayedJobs, setDisplayedJobs] = useState(null);
 
+  // Load data
   useEffect(() => {
     fetch(RESULTS_URL)
       .then(res => {
@@ -66,30 +177,97 @@ export default function App() {
       });
   }, []);
 
+  // When filter mode or page changes, animate transition
+  useEffect(() => {
+    if (!data) return;
+    setAnimating(true);
+    const timeout = setTimeout(() => {
+      setDisplayedJobs(data);
+      setAnimating(false);
+      setPageIndex(0);
+    }, 150);
+    return () => clearTimeout(timeout);
+  }, [showRelevant, data]);
+
+  // Current job list based on filter
+  const jobs = useMemo(() => {
+    if (!data) return [];
+    return showRelevant
+      ? (data.relevantJobs || [])
+      : [...(data.relevantJobs || []), ...(data.filteredJobs || [])];
+  }, [data, showRelevant]);
+
+  // Group by date
+  const dayGroups = useMemo(() => groupByDate(jobs), [jobs]);
+
+  // Current page
+  const currentPage = dayGroups[pageIndex] || null;
+
+  const handleToggle = (mode) => {
+    setShowRelevant(mode === 'relevant');
+  };
+
+  const goNext = () => {
+    if (pageIndex < dayGroups.length - 1) setPageIndex(i => i + 1);
+  };
+
+  const goPrev = () => {
+    if (pageIndex > 0) setPageIndex(i => i - 1);
+  };
+
+  const filteredCount = (data?.filteredJobs?.length || 0);
+
   return (
     <div className="app">
       <header>
-        <h1>Jobbmuligheter</h1>
-        <p className="subtitle">Lektor med mastergrad i matematikkpedagogikk</p>
+        <div className="header-top">
+          <h1>Jobbmuligheter</h1>
+          <p className="subtitle">Lektor med mastergrad i matematikkpedagogikk</p>
+        </div>
+
+        {data && (
+          <div className="header-controls">
+            <Toggle mode={showRelevant ? 'relevant' : 'all'} onToggle={handleToggle} />
+            {filteredCount > 0 && (
+              <span className="filtered-hint">
+                {filteredCount} filtrert bort
+              </span>
+            )}
+          </div>
+        )}
+
         {data && (
           <p className="meta">
             {data.relevant} relevante av {data.total} jobber
             <span className="separator">·</span>
-            Oppdatert {new Date(data.analyzed).toLocaleString('nb-NO')}
+            Oppdatert {new Date(data.analyzed).toLocaleString('nb-NO', {
+              day: 'numeric',
+              month: 'short',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
           </p>
         )}
       </header>
 
-      <main>
+      <main className={animating ? 'main--fading' : 'main--visible'}>
         {loading && <LoadingState />}
         {error && <ErrorState message={error} />}
-        {!loading && !error && data && data.jobs.length === 0 && <EmptyState />}
-        {!loading && !error && data && data.jobs.length > 0 && (
-          <div className="job-list">
-            {data.jobs.map(job => (
-              <JobCard key={job.id} job={job} />
-            ))}
-          </div>
+        {!loading && !error && !currentPage && <EmptyState mode={showRelevant ? 'relevant' : 'all'} />}
+        {!loading && !error && currentPage && (
+          <>
+            <DayPage
+              date={currentPage.date}
+              jobs={currentPage.jobs}
+              showFiltered={showRelevant && currentPage.jobs.some(j => !j.matchReason?.startsWith('Tittel'))}
+            />
+            <Pagination
+              currentIndex={pageIndex}
+              totalPages={dayGroups.length}
+              onPrev={goNext}
+              onNext={goPrev}
+            />
+          </>
         )}
       </main>
 
